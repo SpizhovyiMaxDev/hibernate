@@ -27,19 +27,18 @@ public class Manager {
     }
 
     private static void createAndInsertRowsEntities() {
-        try (Session session = factory.getCurrentSession()) {
-            session.beginTransaction();
+        Session session = factory.getCurrentSession();
+        session.beginTransaction();
 
-            List<Author> authors = createAuthors();
-            List<Book> books = createBooks(authors);
-            List<Library> libraries = createLibraries(books);
+        List<Author> authors = createAuthors();
+        List<Book> books = createBooks(authors);
+        List<Library> libraries = createLibraries(books);
 
-            books.forEach(book -> associateBookWithAuthorAndLibraries(book, libraries));
+        books.forEach(book -> associateBookWithAuthorAndLibraries(book, libraries));
 
-            persistEntities(session, authors, books, libraries);
+        persistEntities(session, authors, books, libraries);
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().commit();
     }
 
     private static void associateBookWithAuthorAndLibraries(Book book, List<Library> libraries) {
@@ -101,140 +100,135 @@ public class Manager {
     }
 
     private static void runHQLQueries() {
-        try (Session session = factory.getCurrentSession()) {
-            session.beginTransaction();
+        Session session = factory.getCurrentSession();
+        session.beginTransaction();
 
-            String genre = "Fantasy";
-            Query<Book> fantasyBooksQuery = session.createQuery("from Book where genre = :genre", Book.class);
-            fantasyBooksQuery.setParameter("genre", genre);
-            fantasyBooksQuery.getResultList().forEach(out::println);
+        String genre = "Fantasy";
+        Query<Book> fantasyBooksQuery = session.createQuery("from Book where genre = :genre", Book.class);
+        fantasyBooksQuery.setParameter("genre", genre);
+        fantasyBooksQuery.getResultList().forEach(out::println);
 
-            Query<Object[]> query = session.createQuery(
-                    "select title, pages from Book where genre = :genre1 or genre = :genre2", Object[].class
-            );
-            query.setParameter("genre1", "Satire");
-            query.setParameter("genre2", "Dystopian");
+        Query<Object[]> query = session.createQuery(
+                "select title, pages from Book where genre = :genre1 or genre = :genre2", Object[].class
+        );
+        query.setParameter("genre1", "Satire");
+        query.setParameter("genre2", "Dystopian");
 
-            List<Object[]> results = query.getResultList();
+        List<Object[]> results = query.getResultList();
 
-            for (Object[] row : results) {
-                String title = (String) row[0];
-                Integer pages = (Integer) row[1];
-                out.println("Title: " + title + ", Pages: " + pages);
-            }
-
-            session.getTransaction().commit();
+        for (Object[] row : results) {
+            String title = (String) row[0];
+            Integer pages = (Integer) row[1];
+            out.println("Title: " + title + ", Pages: " + pages);
         }
+
+        session.getTransaction().commit();
     }
 
     private static void demonstrateCaching() {
-        try (Session session = factory.getCurrentSession()) {
-            session.beginTransaction();
-            Book book = session.get(Book.class, 1);
-            out.println(book);
+        Session session = factory.getCurrentSession();
+        session.beginTransaction();
+        Book book = session.get(Book.class, 1);
+        out.println(book);
 
-            Book cachedBook = session.get(Book.class, 1);
-            out.println(cachedBook);
-            session.getTransaction().commit();
-        }
+        Book cachedBook = session.get(Book.class, 1);
+        out.println(cachedBook);
+        session.getTransaction().commit();
     }
 
     private static void lazyLoadingDemonstration() {
-        try (Session session = factory.getCurrentSession()) {
-            session.beginTransaction();
+        Session session = factory.getCurrentSession();
+        session.beginTransaction();
 
-            // Reminder: Retrieve the Library entity by ID. Since the books collection is marked as FetchType.LAZY,
-            // the associated Book entities will not be fetched from the database until explicitly accessed.
-            Library library = session.get(Library.class, 1);
-            Library library2 = session.byId(Library.class).getReference(2);
+        // Reminder: Retrieve the Library entity by ID. Since the books collection is marked as FetchType.LAZY,
+        // the associated Book entities will not be fetched from the database until explicitly accessed.
+        Library library = session.get(Library.class, 1);
+        Library library2 = session.byId(Library.class).getReference(2);
 
-            session.getTransaction().commit();
-        }
+        session.getTransaction().commit();
     }
 
     private static void performCRUDOperations() {
-        try (Session session = factory.getCurrentSession()) {
-            session.beginTransaction();
+        Session session = factory.getCurrentSession();
+        session.beginTransaction();
 
-            // 0. Insert a new author
-            Author robertMartin = new Author("Robert C. Martin", "unclebob@gmail.com");
-            session.persist(robertMartin);
+        // 0. Insert a new author
+        Author robertMartin = new Author("Robert C. Martin", "unclebob@gmail.com");
+        session.persist(robertMartin);
 
-            // 1. Insert a new book written by the new author
-            Book cleanCode = new Book("Clean Code", "Education", 464, robertMartin);
-            session.persist(cleanCode);
+        // 1. Insert a new book written by the new author
+        Book cleanCode = new Book("Clean Code", "Education", 464, robertMartin);
+        session.persist(cleanCode);
 
-            // 2. Read: Fetch books by author name using HQL
-            String targetAuthorName = "George Orwell";
+        // 2. Read: Fetch books by author name using HQL
+        String targetAuthorName = "George Orwell";
 
-            Query<Object[]> booksByOrwellQuery = session.createQuery(
-                    "SELECT b.title, b.genre, b.pages " +
-                            "FROM Book b " +
-                            "WHERE b.author.fullName = :authorName",
-                    Object[].class
-            );
+        Query<Object[]> booksByOrwellQuery = session.createQuery(
+                "SELECT b.title, b.genre, b.pages " +
+                        "FROM Book b " +
+                        "WHERE b.author.fullName = :authorName",
+                Object[].class
+        );
 
-            booksByOrwellQuery.setParameter("authorName", targetAuthorName);
-            List<Object[]> booksByOrwell = booksByOrwellQuery.getResultList();
+        booksByOrwellQuery.setParameter("authorName", targetAuthorName);
+        List<Object[]> booksByOrwell = booksByOrwellQuery.getResultList();
 
-            for (Object[] row : booksByOrwell) {
-                String title = (String) row[0];
-                String genre = (String) row[1];
-                int pages = (int) row[2];
+        for (Object[] row : booksByOrwell) {
+            String title = (String) row[0];
+            String genre = (String) row[1];
+            int pages = (int) row[2];
 
-                System.out.println("Title: " + title + ", Genre: " + genre + ", Pages: " + pages);
-            }
-
-            // 3. Update: Change page count for "The Hobbit"
-            Book hobbitBook = retrieveBookByTitle(session, "The Hobbit");
-
-            if (hobbitBook != null) {
-                hobbitBook.setPages(350);
-                session.merge(hobbitBook);
-            }
-
-            // 4. Delete: Remove "Animal Farm" from the database
-            Book animalFarmBook = retrieveBookByTitle(session, "Animal Farm");
-
-            if (animalFarmBook != null) {
-                // Removed book from all associated libraries (Many-to-Many fix)
-                for (Library library : animalFarmBook.getLibraries()) {
-                    library.getBooks().remove(animalFarmBook);
-                }
-
-                animalFarmBook.getLibraries().clear(); // Cleaned up local reference, it is optional
-
-                session.remove(animalFarmBook);
-            }
-
-            // 5. Aggregate: Count number of books by genre
-            Query<Object[]> genreCountQuery = session.createQuery(
-                    "SELECT b.genre, COUNT(b) FROM Book b GROUP BY b.genre",
-                    Object[].class
-            );
-
-            List<Object[]> genreStats = genreCountQuery.getResultList();
-
-            for (Object[] row : genreStats) {
-                String genre = (String) row[0];
-                long bookCount = (long) row[1];
-
-                System.out.println("Genre: " + genre + ", Count: " + bookCount);
-            }
-
-
-            session.getTransaction().commit();
+            System.out.println("Title: " + title + ", Genre: " + genre + ", Pages: " + pages);
         }
+
+        // 3. Update: Change page count for "The Hobbit"
+        Book hobbitBook = retrieveBookByTitle(session, "The Hobbit");
+
+        if (hobbitBook != null) {
+            hobbitBook.setPages(350);
+            session.merge(hobbitBook);
+        }
+
+        // 4. Delete: Remove "Animal Farm" from the database
+        Book animalFarmBook = retrieveBookByTitle(session, "Animal Farm");
+
+        if (animalFarmBook != null) {
+            // Removed book from all associated libraries (Many-to-Many fix)
+            for (Library library : animalFarmBook.getLibraries()) {
+                library.getBooks().remove(animalFarmBook);
+            }
+
+            animalFarmBook.getLibraries().clear(); // Cleaned up local reference, it is optional
+
+            session.remove(animalFarmBook);
+        }
+
+        // 5. Aggregate: Count number of books by genre
+        Query<Object[]> genreCountQuery = session.createQuery(
+                "SELECT b.genre, COUNT(b) FROM Book b GROUP BY b.genre",
+                Object[].class
+        );
+
+        List<Object[]> genreStats = genreCountQuery.getResultList();
+
+        for (Object[] row : genreStats) {
+            String genre = (String) row[0];
+            long bookCount = (long) row[1];
+
+            System.out.println("Genre: " + genre + ", Count: " + bookCount);
+        }
+
+        session.getTransaction().commit();
     }
 
-    private static Book retrieveBookByTitle(Session session, String title){
+    private static Book retrieveBookByTitle(Session session, String title) {
         Query<Book> bookQuery = session.createQuery(
                 "FROM Book b " +
-                   "WHERE b.title = :title ",
+                        "WHERE b.title = :title ",
                 Book.class
         );
         bookQuery.setParameter("title", title);
 
-        return  bookQuery.getSingleResult();
+        return bookQuery.getSingleResult();
     }
 }
