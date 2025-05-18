@@ -27,7 +27,7 @@ public class Manager {
     }
 
     private static void createAndInsertRowsEntities() {
-        Session session = factory.getCurrentSession();
+        Session session = factory.openSession();
         session.beginTransaction();
 
         List<Author> authors = createAuthors();
@@ -39,6 +39,7 @@ public class Manager {
         persistEntities(session, authors, books, libraries);
 
         session.getTransaction().commit();
+        session.close();
     }
 
     private static void associateBookWithAuthorAndLibraries(Book book, List<Library> libraries) {
@@ -100,7 +101,7 @@ public class Manager {
     }
 
     private static void runHQLQueries() {
-        Session session = factory.getCurrentSession();
+        Session session = factory.openSession();
         session.beginTransaction();
 
         String genre = "Fantasy";
@@ -123,10 +124,11 @@ public class Manager {
         }
 
         session.getTransaction().commit();
+        session.close();
     }
 
     private static void demonstrateCaching() {
-        Session session = factory.getCurrentSession();
+        Session session = factory.openSession();
         session.beginTransaction();
         Book book = session.get(Book.class, 1);
         out.println(book);
@@ -134,10 +136,11 @@ public class Manager {
         Book cachedBook = session.get(Book.class, 1);
         out.println(cachedBook);
         session.getTransaction().commit();
+        session.close();
     }
 
     private static void lazyLoadingDemonstration() {
-        Session session = factory.getCurrentSession();
+        Session session = factory.openSession();
         session.beginTransaction();
 
         // Reminder: Retrieve the Library entity by ID. Since the books collection is marked as FetchType.LAZY,
@@ -146,10 +149,11 @@ public class Manager {
         Library library2 = session.byId(Library.class).getReference(2);
 
         session.getTransaction().commit();
+        session.close();
     }
 
     private static void performCRUDOperations() {
-        Session session = factory.getCurrentSession();
+        Session session = factory.openSession();
         session.beginTransaction();
 
         // 0. Insert a new author
@@ -219,6 +223,7 @@ public class Manager {
         }
 
         session.getTransaction().commit();
+        session.close();
     }
 
     private static Book retrieveBookByTitle(Session session, String title) {
